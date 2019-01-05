@@ -41,7 +41,20 @@ class SlotFileReader:
         self.__fd = file(filename)
 
     def read_one(self):
-        pass
+        line = self.__fd.readline()
+        arr = line.strip().split('\t')
+        label = int(arr[0])
+        slots = []
+        for item in arr[1:]:
+            key, id_list = self.__parse_slot(item)
+            slots.append( (key, id_list) )
+
+        return label, slots
+
+    def __parse_slot(self, item):
+        key, ids = item.split(':')
+        id_list = map(lambda x:int(x), ids.split(','))
+        return key, id_list
 
     def generate(self, count):
         pass
