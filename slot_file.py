@@ -39,9 +39,19 @@ class SlotFileWriter:
 class SlotFileReader:
     def __init__(self, filename):
         self.__fd = file(filename)
+        self.__epoch = 0
+
+    def epoch(self): return self.__epoch
 
     def read_one(self):
+        # endless reading
         line = self.__fd.readline()
+        if line == '':
+            # ending of file.
+            self.__epoch += 1
+            self.reopen()
+            line = self.__fd.readline()
+
         arr = line.strip().split('\t')
         label = int(arr[0])
         slots = []
@@ -51,15 +61,25 @@ class SlotFileReader:
 
         return label, slots
 
+    def next(self, n):
+        labels = []
+        slots = []
+        for i in range(n):
+            label, slot = self.read_one()
+            labels.append(label)
+            slots.append(slot)
+        return labels, slots
+
+    def reopen(self):
+        self.__fd.seek(0)
+
     def __parse_slot(self, item):
         key, ids = item.split(':')
+        # TODO: Temp default process. WRONG! but for nan.
+        if ids == '':
+            return key, [0]
         id_list = map(lambda x:int(x), ids.split(','))
         return key, id_list
-
-    def generate(self, count):
-        pass
-
-
 
 class Unittest(pydev.App):
     def __init__(self):

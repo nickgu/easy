@@ -9,17 +9,18 @@ import pydev
 import torch
 import torch.nn as nn
 import tqdm
+import traceback
 
 
 def dump_embeddings(emb, fd):
     for emb in emb.weight:
         print >> fd, ','.join(map(lambda x:str(x), emb.tolist()))
 
-def common_train(forward_and_backward_fn, optimizer, iteration_count, loss_curve_output=None):
-    process_bar = tqdm.tqdm(range(int(iteration_count)))
-    acc_loss = 1.0
+def common_train(forward_and_backward_fn, optimizer, iteration_count, while_condition=None, loss_curve_output=None):
     try:
-        for iter_num in process_bar:
+        acc_loss = 1.0
+
+        def inner_proc(iter_num, acc_loss):
             optimizer.zero_grad()
             cur_loss = forward_and_backward_fn()
             optimizer.step()
@@ -27,11 +28,27 @@ def common_train(forward_and_backward_fn, optimizer, iteration_count, loss_curve
             acc_loss = acc_loss * 0.99 + 0.01 * cur_loss
             if loss_curve_output:
                 print >> loss_curve_output, '%d,%.3f,%.3f' % (iter_num, acc_loss, cur_loss)
-            process_bar.set_description("Loss:%0.3f, AccLoss:%.3f, lr: %0.6f" %
-                                        (cur_loss, acc_loss, optimizer.param_groups[0]['lr']))
+            return cur_loss, acc_loss
+
+        if while_condition:
+            iter_num = 0
+            while while_condition():
+                acc_loss, cur_loss = inner_proc(iter_num, acc_loss)
+                iter_num += 1
+                sys.stdout.write('%cIter=%d acc_loss=%.3f cur_loss=%.3f lr:%.6f' % (13, 
+                        iter_num, acc_loss, cur_loss, optimizer.param_groups[0]['lr']
+                    ))
+        else:
+            process_bar = tqdm.tqdm(range(int(iteration_count)))
+            for iter_num in process_bar:
+                cur_loss, acc_loss = inner_proc(iter_num, acc_loss)
+                process_bar.set_description("AccLoss:%0.3f, CurLoss:%.3f, lr: %0.6f" %
+                                    (acc_loss, cur_loss, optimizer.param_groups[0]['lr']))
+
 
     except Exception, e:
-        pydev.err(e)
+        exstr = traceback.format_exc()
+        pydev.err(exstr)
         pydev.err('Training Exception(may be interrupted by control.)')
 
 

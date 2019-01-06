@@ -57,6 +57,8 @@ class SlotIndexCoder:
     def __init__(self):
         self.__slot_index = {}
 
+    def slot_dict(self): return self.__slot_index
+
     def get(self, slot, key):
         if slot not in self.__slot_index:
             return None
