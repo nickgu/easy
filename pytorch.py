@@ -18,7 +18,7 @@ def dump_embeddings(emb, fd):
 
 def common_train(forward_and_backward_fn, optimizer, iteration_count, while_condition=None, loss_curve_output=None):
     try:
-        acc_loss = 1.0
+        acc_loss = 0.69
 
         def inner_proc(iter_num, acc_loss):
             optimizer.zero_grad()
@@ -35,7 +35,7 @@ def common_train(forward_and_backward_fn, optimizer, iteration_count, while_cond
             while while_condition():
                 acc_loss, cur_loss = inner_proc(iter_num, acc_loss)
                 iter_num += 1
-                sys.stdout.write('%cIter=%d acc_loss=%.3f cur_loss=%.3f lr:%.6f' % (13, 
+                sys.stderr.write('%cIter=%d acc_loss=%.3f cur_loss=%.3f lr:%.6f' % (13, 
                         iter_num, acc_loss, cur_loss, optimizer.param_groups[0]['lr']
                     ))
         else:
