@@ -10,7 +10,9 @@ import time
 
 
 import pydev
-import tensorflow as tf
+# compatible for v2.
+import tensorflow.compat.v1 as tf
+tf.disable_v2_behavior()
 import numpy
 import numpy.random
 
